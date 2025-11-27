@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bangalore Pothole Map</title>
+<style>
+body {
+    font-family: "Poppins", "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #0c0f14; 
+    color: #d0d3d8;      
+}
+
+.fade { animation: fade 0.4s ease-in-out; }
+@keyframes fade { from {opacity:0;} to {opacity:1;} }
+
+.navbar {
+    width: 98%;
+    background: linear-gradient(90deg, #001f3f, #003b88);
+    padding: 18px 25px;
+    color: #e7eaf1;
+    font-size: 22px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.6);
+}
+
+.admin-btn {
+    background: #0c0f14;
+    color: #00d46a; 
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid #00d46a;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.admin-btn:hover {
+    background: #00d46a;
+    color: #0c0f14;
+    transform: scale(1.07);
+}
+
+.container {
+    width: 100%;
+    max-width: 720px;
+    margin: 35px auto;
+    background: #0f1218;   
+    padding: 35px;
+    border-radius: 16px;
+    box-shadow: 0 4px 25px rgba(0,0,0,0.55);
+    border: 1px solid #1d2331;
+}
+
+.map-title,
+.login-title {
+    color: #00d46a;
+    text-align: center;
+    text-shadow: 0 0 6px rgba(0, 37, 19, 0.7);
+}
+
+iframe {
+    width: 100%;
+    height: 650px;
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 4px 22px rgba(0, 0, 0, 0.75);
+}
+
+.login-box {
+    width: 100%;
+    max-width: 420px;
+    margin: 40px auto;
+    background: #0f1218;
+    padding: 35px;
+    border-radius: 16px;
+    box-shadow: 0 4px 25px rgba(0,0,0,0.55);
+    border: 1px solid #1d2331;
+}
+
+.input-field {
+    width: 93%;
+    padding: 14px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    border: 1px solid #2a303e;
+    background: #151922; 
+    color: #d8d8d8;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.input-field:focus {
+    border-color: #00d46a;
+    box-shadow: 0 0 8px rgba(0, 37, 19, 0.7);
+    outline: none;
+}
+
+.btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #004b3a, #00d46a); 
+    color: black;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 37, 19, 0.7);
+    transition: 0.3s;
+}
+
+.btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 22px rgba(0, 37, 19, 0.7);
+}
+
+.form-card {
+    padding: 25px;
+    background: #151922;  
+    border-radius: 14px;
+    border: 1px solid #2a303e;
+}
+
+label {
+    color: #b7bcc6;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.hidden { display: none; }
+
+@media (max-width: 650px) {
+    iframe { height: 450px; }
+    .navbar { font-size: 18px; }
+    .admin-btn { padding: 8px 12px; font-size: 13px; }
+}
+</style>
+</head>
+<body class="fade">
+
+<div class="navbar">
+    Bangalore Pothole Map
+    <button class="admin-btn" onclick="showLogin()">Admin Login</button>
+</div>
+
+<div id="viewerPage" class="container fade">
+    <h2 class="map-title">Live Pothole Visualization</h2>
+    <iframe id="mapFrame" src="generated/pothole_map.html"></iframe>
+</div>
+
+<div id="loginPage" class="login-box hidden fade">
+    <h2 class="login-title">Admin Login</h2>
+
+    <input id="username" class="input-field" placeholder="Username">
+    <input id="password" type="password" class="input-field" placeholder="Password">
+
+    <button class="btn" onclick="login()">Login</button>
+</div>
+
+<div id="adminPage" class="container hidden fade">
+    <h2 style="text-align:center; font-weight:700;">Admin – Generate Pothole Map</h2>
+
+    <div class="form-card">
+        <label>Video File Path</label>
+        <input id="videoPath" class="input-field" placeholder="C:/videos/road1.mp4">
+
+        <label>GPS File Path</label>
+        <input id="gpsPath" class="input-field" placeholder="C:/gps/road1.txt">
+
+        <button class="btn" onclick="generateMap()">Generate Map</button>
+    </div>
+    <div class="form-card" style="margin-top:20px;">
+        <h3 style="color:#00d46a; text-align:center;">Delete GPS Entries</h3>
+        <label>GPS File Path</label>
+        <input id="deleteGpsPath" class="input-field" placeholder="C:/gps/delete_list.txt">
+        <button class="btn" onclick="deleteGPS()">Delete GPS from JSON</button>
+    </div>
+</div>
+
+<script>
+const loginBtn = document.querySelector(".admin-btn");
+
+function showLogin() {
+    document.getElementById("viewerPage").classList.add("hidden");
+    document.getElementById("loginPage").classList.remove("hidden");
+}
+
+function login() {
+    const data = new FormData();
+    data.append("username", username.value);
+    data.append("password", password.value);
+
+    fetch("/login_admin", { method: "POST", body: data })
+        .then(res => res.json())
+        .then(response => {
+            if (response.success) {
+                loginPage.classList.add("hidden");
+                adminPage.classList.remove("hidden");
+                username.value = "";
+                password.value = "";
+                loginBtn.style.display = "none";
+            } else {
+                alert("Invalid username or password!");
+            }
+        });
+}
+
+function generateMap() {
+    const data = new FormData();
+    data.append("video", document.getElementById("videoPath").value);
+    data.append("gps", document.getElementById("gpsPath").value);
+
+    fetch("/generate", { method: "POST", body: data })
+        .then(res => res.json())
+        .then(response => {
+            if (response.success) {
+                adminPage.classList.add("hidden");
+                viewerPage.classList.remove("hidden");
+                loginBtn.style.display = "inline-block";
+                mapFrame.src = "generated/pothole_map.html?time=" + Date.now();
+            }
+        });
+}
+
+function deleteGPS() {
+    const data = new FormData();
+    data.append("gps_file", document.getElementById("deleteGpsPath").value);
+
+    fetch("/delete", { method: "POST", body: data })
+        .then(res => res.json())
+        .then(response => {
+            if (response.success) {
+                alert(`Deleted ${response.removed} GPS entries from JSON.`);
+            } else {
+                alert("Failed to delete GPS entries.");
+            }
+            adminPage.classList.add("hidden");
+            viewerPage.classList.remove("hidden");
+            loginBtn.style.display = "inline-block";
+            mapFrame.src = "generated/pothole_map.html?time=" + Date.now();
+
+        });
+}
+</script>
+</body>
+</html>
